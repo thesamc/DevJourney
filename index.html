@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Development Journal - Neon Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+      /* Core variables */
+      :root {
+        --bg-primary: #0a0014;
+        --card-bg: #150029;
+        --text-primary: #e0e0ff;
+        --accent-1: #ff00ff;
+        --accent-2: #00ffff;
+      }
+      
+      /* Base reset */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: 'Space Grotesk', sans-serif;
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+      
+      /* Layout */
+      #journal {
+        padding: 4rem 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      
+      .header {
+        text-align: center;
+        margin-bottom: 6rem;
+      }
+      
+      /* Typography */
+      .title {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+      
+      .subtitle {
+        color: var(--text-primary);
+        opacity: 0.7;
+        font-size: 1.2rem;
+        font-family: 'JetBrains Mono', monospace;
+        min-height: 1.5em;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 3px solid var(--accent-1);
+        display: inline-block;
+        margin-top: 1rem;
+        visibility: hidden;
+      }
+
+      .subtitle.visible {
+        visibility: visible;
+      }
+      
+      /* Post grid */
+      .posts {
+        display: grid;
+        gap: 3rem;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      }
+      
+      /* Card styling */
+      .post {
+        height: 500px;
+        perspective: 1000px;
+        cursor: pointer;
+        transition: .2s ease-in;
+      }
+
+      .post:hover {
+        transform: scale(1.04);
+      }
+      
+      .post-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: left;
+        transition: transform 0.8s;
+        transform-style: preserve-3d;
+      }
+      
+      .post.flipped .post-inner {
+        transform: rotateY(180deg);
+      }
+      
+      /* Card faces */
+      .post-front, .post-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        padding: 2.5rem;
+        border-radius: 24px;
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .post-front::before, .post-back::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        bottom: -2px;
+        left: -2px;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        z-index: -1;
+        border-radius: 24px;
+        opacity: 0.3;
+      }
+      
+      .post-back {
+        transform: rotateY(180deg);
+        overflow-y: auto;
+      }
+      
+      /* Card content */
+      .post-date {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--accent-2);
+        margin-bottom: 1rem;
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: rgba(0, 255, 255, 0.1);
+        border-radius: 100px;
+      }
+      
+      .post-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      /* Scrollbar styling */
+      .post-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      .post-content::-webkit-scrollbar-track {
+        background: rgba(0, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+      
+      .post-content::-webkit-scrollbar-thumb {
+        background: var(--accent-2);
+        border-radius: 4px;
+      }
+      
+      /* Tags */
+      .tags {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+      
+      .tag {
+        background: rgba(255, 0, 255, 0.1);
+        color: var(--accent-1);
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-size: 0.85rem;
+        font-family: 'JetBrains Mono', monospace;
+      }
+      
+      /* Content areas */
+      .post-preview {
+        color: var(--text-primary);
+        opacity: 0.8;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      
+      .post-content {
+        color: var(--text-primary);
+        overflow-y: auto;
+        padding-right: 1rem;
+      }
+      
+      .flip-hint {
+        margin-top: auto;
+        color: var(--accent-2);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        text-align: right;
+      }
+
+      .key {
+        font-size: 1.5rem;
+      }
+
+      /* Mobile styles */
+      @media (max-width: 768px) {      
+        #journal {
+          padding: 2rem 1rem;
+          -webkit-overflow-scrolling: touch;
+        }
+      
+        .posts {
+          gap: 2rem;
+        }
+      
+        .post {
+          height: auto;
+          min-height: 500px;
+          perspective: none;
+          transform: none !important;
+          margin-bottom: 2rem;
+        }
+      
+        .post:hover {
+          transform: none !important;
+        }
+      
+        .post-inner {
+          position: relative;
+          transform-style: flat;
+        }
+      
+        .post-front, .post-back {
+          position: relative;
+          height: auto;
+          min-height: 500px;
+          padding: 1.5rem;
+        }
+      
+        .post.flipped .post-inner {
+          transform: none;
+        }
+      
+        .post.flipped .post-front {
+          display: none;
+        }
+      
+        .post.flipped .post-back {
+          transform: none;
+          position: relative;
+          display: block;
+        }
+      
+        .post-content {
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          padding-right: 0.5rem;
+        }
+      
+        .post-title {
+          font-size: 1.5rem;
+        }
+      
+        .post-preview {
+          font-size: 0.9rem;
+        }
+      
+        .post-date {
+          font-size: 0.8rem;
+        }
+      
+        .tag {
+          font-size: 0.8rem;
+          padding: 0.4rem 0.8rem;
+        }
+      
+        .flip-hint {
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="journal">
+      <header class="header">
+        <h1 class="title">Sam's web devJourney</h1>
+        <p class="subtitle" id="typingText">How I'm learning to navigate the frontiers of web development</p>
+      </header>
+      <div class="posts">
+        <!-- Navbar Post -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">JavaScript Basics</time>
+              <h2 class="post-title">Dynamic Property Access in Objects</h2>
+              <div class="tags">
+                <span class="tag">JavaScript</span>
+                <span class="tag">Objects</span>
+                <span class="tag">Functions</span>
+              </div>
+              <p class="post-preview">
+                Exploring how JavaScript allows dynamic property access in objects using bracket notation, and applying it to perform operations based on user input.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Dynamic Object Lookups with Bracket Notation</h2>
+              <div class="post-content">
+                <p>
+                  While working on a basic calculator implementation, I discovered the power of dynamic property access in JavaScript objects. Here's what I learned about using bracket notation for flexible object property lookups.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key Learnings:</strong>
+                </p>
+                <ul>
+                  <li>Object literals provide an elegant way to map operations to their corresponding calculations</li>
+                  <li>Bracket notation enables dynamic property access using variables as keys</li>
+                  <li>This approach eliminates the need for repetitive conditional logic like if/switch statements</li>
+                  <li>Error handling can be gracefully implemented using undefined checks</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <p>
+                  I transformed a traditional calculator function using switch statements into a more elegant solution using object literals and bracket notation. Here's the evolution:
+                </p>
+                <p>
+                  Original implementation using switch:
+                </p>
+                <pre>
+        <code>function basicOp(operation, value1, value2) {
+          switch (operation) {
+            case '+': return value1+value2;
+            break;
+            case '-': return value1-value2;
+            break;
+            case '*': return value1*value2;
+            break;
+            case '/': return value1/value2;
+            break;
+            default: 'Enter a valid operator.'
+          }
+          return;
+        }</code>
+                </pre>
+                <p>
+                  Improved implementation using object literals:
+                </p>
+                <pre>
+        <code>function basicOp(operation, value1, value2) {
+          var cases = {
+            '+': value1 + value2,
+            '-': value1 - value2,
+            '*': value1 * value2,
+            '/': value1 / value2
+          };
+          return cases[operation];
+        }</code>
+                </pre>
+                <p>
+                  For better error handling, I added a fallback:
+                </p>
+                <pre>
+        <code>return cases[operation] !== undefined ? cases[operation] : 'Invalid operation';</code>
+                </pre>
+                <hr>
+                <p>
+                  <strong class="key">Practical Applications:</strong>
+                </p>
+                <ul>
+                  <li>When `operation = '+'`, the function dynamically looks up `cases['+']` to evaluate `value1 + value2`</li>
+                  <li>Similarly, `operation = '-'` triggers `cases['-']` to compute `value1 - value2`</li>
+                  <li>Invalid operations gracefully return an error message instead of undefined</li>
+                  <li>New operations can be added by simply including new key-value pairs in the cases object</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Conclusion:</strong>
+                </p>
+                <p>
+                  Implementing dynamic property access through bracket notation has significantly improved my JavaScript code. The approach offers several advantages:
+                </p>
+                <ul>
+                  <li>More maintainable and cleaner syntax compared to traditional conditional statements</li>
+                  <li>Easily scalable by simply adding new operations to the cases object</li>
+                  <li>Efficient performance for lookup-based operations</li>
+                  <li>Better error handling with fallback options</li>
+                </ul>
+                <p>
+                  This pattern has become a valuable tool in my JavaScript development toolkit, especially when dealing with operation mapping and dynamic property access scenarios.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>    
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">JavaScript Insights</time>
+              <h2 class="post-title">Switch Cases vs. Ternary Shorthand</h2>
+              <div class="tags">
+                <span class="tag">JavaScript</span>
+                <span class="tag">Coding Tips</span>
+                <span class="tag">Logic Simplification</span>
+              </div>
+              <p class="post-preview">
+                Exploring the difference between traditional switch cases and JavaScript's powerful shorthand ternary notation. Learn when to use each and how they can optimize your code.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Mastering Switch Cases and Ternary Shorthand</h2>
+              <div class="post-content">
+                <p>
+                  While working on a feature that dynamically greets users based on their status, I discovered the power of both switch cases and ternary shorthand. Here's what I learned about when and why to use each approach.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key learnings:</strong>
+                </p>
+                <ul>
+                  <li>Switch cases are ideal when you have multiple conditions that evaluate the same variable. They help structure your code clearly, especially when you have more than two possibilities to check.</li>
+                  <li>Ternary shorthand is a great tool for situations where you have a simple conditional with two outcomes. It allows you to write more concise and readable code, especially for small, one-line operations.</li>
+                  <li>Readability should be prioritized when choosing between the two methods. If a switch case makes your logic more understandable, go with that. If a ternary operator simplifies the code without losing clarity, it's a good choice.</li>
+                  <li>In complex situations, combining both approaches can be powerful. For example, you can use a switch case for multiple conditions and incorporate ternary shorthand within each case to simplify the logic.</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>For a project I worked on, I used a ternary operator to quickly determine whether to greet the user as a 'boss' or a 'guest' based on their status. This kept the code short and efficient, and it worked well for a binary choice.</li>
+                  <li>On another part of the project, I utilized a switch case to handle multiple types of user roles, ensuring each role had a specific greeting message. The switch case provided clarity and made the code easy to extend in the future.</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Conclusion:</strong>
+                </p>
+                <p>
+                  Learning when to use a switch case versus a ternary operator has made my JavaScript code more efficient and readable. While switch cases are great for handling more complex decision trees, ternary shorthand is perfect for situations that require a quick, simple choice between two outcomes. Both have their place in well-structured code, and knowing when to use each has enhanced my coding practices.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>        
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">Navigation Learning</time>
+              <h2 class="post-title">Mastering Navbar Dropdowns</h2>
+              <div class="tags">
+                <span class="tag">CSS</span>
+                <span class="tag">Navigation</span>
+                <span class="tag">Hover Effects</span>
+              </div>
+              <p class="post-preview">
+                Creating a smooth, accessible navbar dropdown menu using CSS transitions and hover effects. Learning how to structure nested navigation elements and style them for a professional look.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Building Professional Navbar Dropdowns</h2>
+              <div class="post-content">
+                <p>
+                  While building the Nest Counseling website, I needed to create an elegant dropdown menu for the "Issues We Treat" section. This led me to explore CSS positioning, transitions, and hover effects.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key learnings:</strong>
+                </p>
+                <ul>
+                  <li>Position relative/absolute relationship is crucial for dropdown placement</li>
+                  <li>Using opacity and visibility together creates smooth transitions</li>
+                  <li>Transform helps create a subtle animation effect</li>
+                  <li>Proper z-index ensures dropdown appears above other content</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>HTML Structure:
+                    <ul>
+                      <li>Created parent li with dropdown class</li>
+                      <li>Added dropdown-toggle class for visual indicator</li>
+                      <li>Nested dropdown-content div for menu items</li>
+                    </ul>
+                  </li>
+                  <li>CSS Implementation:
+                    <ul>
+                      <li>Set position: relative on dropdown parent</li>
+                      <li>Used position: absolute on dropdown content</li>
+                      <li>Added transform and opacity for animations</li>
+                      <li>Applied box-shadow for elevated appearance</li>
+                    </ul>
+                  </li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">CSS Structure:</strong>
+                </p>
+                <p>
+                  The key CSS properties that make this work:
+                </p>
+                <ul>
+                  <li>.dropdown { position: relative; display: inline-block }</li>
+                  <li>.dropdown-content { position: absolute; opacity: 0; visibility: hidden }</li>
+                  <li>.dropdown:hover .dropdown-content { opacity: 1; visibility: visible }</li>
+                  <li>transition: all 0.3s ease for smooth animations</li>
+                </ul>
+                <p>
+                  This implementation creates a dropdown that feels natural and professional, with smooth animations and clear visual hierarchy. The hover effects on individual items add an extra layer of interactivity that improves the user experience.
+                </p>
+                <p>
+                  The most challenging part was getting the animation timing right - too fast felt jarring, too slow felt unresponsive. The combination of transform and opacity with a 0.3s duration created the perfect balance of smoothness and responsiveness.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- CSS Layout Card -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">CSS Layout Learning</time>
+              <h2 class="post-title">Creating Scrollable Content Areas</h2>
+              <div class="tags">
+                <span class="tag">CSS</span>
+                <span class="tag">Layout</span>
+                <span class="tag">Overflow</span>
+              </div>
+              <p class="post-preview">
+                Learning how to implement scrollable content areas within fixed-size containers using CSS overflow properties, and styling custom scrollbars for a better user experience.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Mastering Content Overflow</h2>
+              <div class="post-content">
+                <p>
+                  While building my dev journal cards, I needed to handle varying amounts of content within fixed-size containers. This led me to explore CSS overflow properties and scrollbar styling.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key learnings:</strong>
+                </p>
+                <ul>
+                  <li>The container needs a fixed height to enable scrolling</li>
+                  <li>overflow-y: auto creates scrollbar only when needed</li>
+                  <li>height: 100% ensures content container fills parent</li>
+                  <li>Custom scrollbar styling improves visual integration</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>Set fixed height (500px) on parent card container.</li>
+                  <li>Applied overflow-y: auto to enable vertical scrolling.</li>
+                  <li>Added padding-right for scrollbar spacing.</li>
+                  <li>Used webkit-scrollbar selectors for custom styling.</li>
+                    <ul>
+                      <li>::-webkit-scrollbar for width.</li>
+                      <li>::-webkit-scrollbar-track for background.</li>
+                      <li>::-webkit-scrollbar-thumb for the handle.</li>
+                    </ul>
+                  </li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">CSS Structure:</strong>
+                </p>
+                <p>
+                  The key CSS properties that make this work:
+                </p>
+                <ul>
+                  <li>.post { height: 500px }</li>
+                  <li>.post-back { overflow-y: auto }</li>
+                  <li>.post-content { overflow-y: auto; padding-right: 1rem }</li>
+                </ul>
+                <p>
+                  This setup creates a clean, responsive solution that maintains the card's visual design while accommodating varying content lengths. The custom scrollbar styling integrates seamlessly with the neon theme.
+                </p>
+                <p>
+                  The most challenging part was ensuring the scrollable area worked correctly with the card flip animation while maintaining a consistent layout. Getting the height calculations right was crucial for smooth operation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- CSS Animation Card -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">CSS Animation Learning</time>
+              <h2 class="post-title">Learning Text Animation with Keyframes</h2>
+              <div class="tags">
+                <span class="tag">CSS</span>
+                <span class="tag">Animation</span>
+                <span class="tag">Keyframes</span>
+              </div>
+              <p class="post-preview">
+                My journey learning how to create engaging text animations using CSS keyframes. From understanding basic animations to implementing a professional typing effect for my portfolio and dev journal.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Learning CSS Animations</h2>
+              <div class="post-content">
+                <p>
+                  While building my portfolio and dev journal, I wanted to create engaging text animations. This led me to dive deep into CSS keyframes and JavaScript timing.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key Learnings:</strong>
+                </p>
+                <ul>
+                  <li>CSS visibility property prevents content flash better than display:none.</li>
+                  <li>Using DOMContentLoaded ensures proper animation timing.</li>
+                  <li>JavaScript setTimeout controls typing speed and delay.</li>
+                  <li>CSS transitions make animations smooth and professional.</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>Implemented typing animation on portfolio homepage.</li>
+                  <li>Created reusable animation classes for multiple elements.</li>
+                  <li>Added subtle background and border effects for better visibility.</li>
+                  <li>Ensured animations work consistently across browsers.</li>
+                </ul>
+                <p>
+                  This experience taught me that great animations aren't just about the movement—they're about timing, user experience, and attention to detail. Small touches like preventing text flash and adding proper delays make the difference between a good and great animation.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- Vue.js Campus Tour Card -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">Framework Learning</time>
+              <h2 class="post-title">Building a Campus Tour with Vue.js<h2 class="post-title">Building a Campus Tour with Vue.js</h2>
+              <div class="tags">
+                <span class="tag">Vue.js</span>
+                <span class="tag">Components</span>
+                <span class="tag">Router</span>
+              </div>
+              <p class="post-preview">
+                Created my first Vue.js application - an interactive campus tour guide called "Paws on Tour". Learned about components, routing, and state management while building a real-world application.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Learning Vue.js Through Project Work</h2>
+              <div class="post-content">
+                <p>
+                  My second introduction to Vue.js came through building "Paws on Tour", an interactive campus tour application. This project taught me fundamental Vue concepts through hands-on experience.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key Learnings:</strong>
+                </p>
+                <ul>
+                  <li>Component Architecture: Created reusable components like Carousel and Landmark to display location information.</li>
+                  <li>Vue Router: Implemented navigation between locations and detail views using vue-router.</li>
+                  <li>Data Management: Learned to handle state with computed properties and manage data flow between components.</li>
+                  <li>Event Handling: Built interactive features like search, sort, and view toggles.</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>Created a dynamic tour guide with 18 campus locations.</li>
+                  <li>Built grid and list view options with smooth transitions.</li>
+                  <li>Integrated map functionality using Leaflet.js.</li>
+                  <li>Added search and sort capabilities using Vue's reactive system.</li>
+                </ul>
+                <p>
+                  This project showed me how Vue.js simplifies complex UI interactions and state management. The component-based approach made the code more organized and maintainable compared to vanilla JavaScript.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- Bootstrap Card -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">Early Learning Milestone</time>
+              <h2 class="post-title">Bootstrapping My CSS Knowledge</h2>
+              <div class="tags">
+                <span class="tag">Bootstrap</span>
+                <span class="tag">CSS Framework</span>
+                <span class="tag">Responsive Design</span>
+              </div>
+              <p class="post-preview">
+                My journey from writing repetitive CSS to leveraging Bootstrap's component library for my first responsive website, Sam's Menu. Discovering how frameworks can streamline the development process while maintaining professional design standards.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Learning Bootstrap</h2>
+              <div class="post-content">
+                <p>
+                  When I started building websites, I wrote all CSS from scratch. This meant spending hours trying to center elements and make layouts responsive. Then I discovered Bootstrap through Udemy courses, and it changed my approach to web development.
+                </p>
+                <hr>
+                <p>
+                  <strong class="key">Key Learnings:</strong>
+                </p>
+                <ul>
+                  <li>Understanding the grid system revolutionized how I structure pages.</li>
+                  <li>Pre-built components saved me time while ensuring professional appearance.</li>
+                  <li>Responsive design became more systematic with Bootstrap's breakpoints.</li>
+                </ul>
+                <hr>
+                <p>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>Responsive navigation using Bootstrap's navbar component.</li>
+                  <li>Grid system for menu item layouts.</li>
+                  <li>Bootstrap cards for displaying menu items consistently.</li>
+                </ul>
+                <p>
+                  This experience taught me that knowing when to use frameworks is just as important as knowing how to write code from scratch. It's about choosing the right tool for the job.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <!-- First Vue.js Card -->
+        <article class="post">
+          <div class="post-inner">
+            <div class="post-front">
+              <time class="post-date">Framework Learning</time>
+              <h2 class="post-title">First Steps with Vue.js</h2>
+              <div class="tags">
+                <span class="tag">Vue.js</span>
+                <span class="tag">JavaScript</span>
+                <span class="tag">Data Visualization</span>
+              </div>
+              <p class="post-preview">
+                My introduction to Vue.js through building an interactive charting dashboard. Learning how Vue's reactivity system makes data visualization dynamic and user-friendly.
+              </p>
+              <div class="flip-hint">Click to read the full story →</div>
+            </div>
+            <div class="post-back">
+              <h2 class="post-title">Learning Vue.js Basics</h2>
+              <div class="post-content">
+                <p>
+                  After working with vanilla JavaScript, I took my first steps into the world of frontend frameworks with Vue.js. I started by building a data visualization project for a fictional company called EcoFuture Initiative, which taught me fundamental Vue concepts.
+                </p>
+                <p>
+                  <hr>
+                  <strong class="key">Key Learnings:</strong>
+                </p>
+                <ul>
+                  <li>Understanding data management: Created my first reactive data sets for donations, expenses, and impact metrics.</li>
+                  <li>Event handling: Implemented dropdown selection to switch between different data visualizations.</li>
+                  <li>Component structure: Learned how Vue organizes code more efficiently than vanilla JavaScript.</li>
+                </ul>
+                <p>
+                  <hr>
+                  <strong class="key">Real Project Application:</strong>
+                </p>
+                <ul>
+                  <li>Built an interactive dashboard that updates charts based on user selection.</li>
+                  <li>Integrated Google Charts with Vue to create dynamic visualizations.</li>
+                  <li>Managed state changes between different data sets without page reload.</li>
+                </ul>
+                <p>
+                  While challenging at first, Vue.js showed me how frameworks can make interactive websites more manageable and maintainable compared to vanilla JavaScript.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+    <script>
+      // Handle card flips
+      document.querySelectorAll('.post').forEach(post => {
+        post.addEventListener('click', () => {
+          post.classList.toggle('flipped');
+        });
+      });
+
+      // Typing animation
+      const text = "How I'm learning to navigate the frontiers of web development";
+      const typingText = document.getElementById("typingText");
+      let charIndex = 0;
+
+      function typeText() {
+        typingText.classList.add('visible');
+        
+        if (charIndex < text.length) {
+          typingText.textContent = text.substring(0, charIndex + 1);
+          charIndex++;
+          setTimeout(typeText, 100);
+        } else {
+          typingText.classList.add("done");
+        }
+      }
+
+      // Initialize typing animation after page load
+      window.addEventListener("DOMContentLoaded", () => {
+        typingText.textContent = '';
+        setTimeout(typeText, 1000);
+      });
+    </script>
+  </body>
+</html>
